@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CENTERNET — Браузер Сан-Фиерро</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+        }
+
+        body {
+            background: #0a0a0a;
+            font-family: 'Courier New', 'Fira Code', monospace;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* БРАУЗЕР */
+        .browser {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #0f0f0f;
+        }
+
+        /* ВЕРХНЯЯ ПАНЕЛЬ (как в Chrome) */
+        .browser-toolbar {
+            background: #0c0c0c;
+            border-bottom: 2px solid #ff3333;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .tab-bar {
+            display: flex;
+            gap: 2px;
+            overflow-x: auto;
+            flex: 1;
+        }
+
+        .tab {
+            background: #1a1a1a;
+            border: 1px solid #ff3333;
+            padding: 8px 16px;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            background: #ff3333;
+            color: #0a0a0a;
+            font-weight: bold;
+        }
+
+        .tab-close {
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .new-tab {
+            background: #ff3333;
+            border: none;
+            color: #0a0a0a;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .url-bar {
+            flex: 2;
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            background: #0a0a0a;
+            border: 1px solid #ff3333;
+            padding: 5px 10px;
+        }
+
+        .url-input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #fff;
+            font-family: monospace;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .go-btn {
+            background: #ff3333;
+            border: none;
+            color: #0a0a0a;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .user-menu {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: #1a1a1a;
+            padding: 5px 12px;
+            border: 1px solid #ff3333;
+            cursor: pointer;
+        }
+
+        .user-avatar {
+            font-size: 20px;
+        }
+
+        /* ОСНОВНАЯ ОБЛАСТЬ (страницы) */
+        .pages-container {
+            flex: 1;
+            position: relative;
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            background: #fff;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .iframe-page {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .sar-page {
+            background: #0a0a0a;
+            color: #fff;
+            padding: 20px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+
+        /* АВТОРИЗАЦИЯ */
+        .auth-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #050505;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .auth-box {
+            background: #0f0f0f;
+            border: 3px solid #ff3333;
+            padding: 40px;
+            width: 380px;
+            text-align: center;
+        }
+
+        .auth-logo {
+            font-size: 40px;
+            color: #ff3333;
+            margin-bottom: 20px;
+        }
+
+        .auth-title {
+            font-size: 20px;
+            color: #fff;
+            margin-bottom: 25px;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background: #0a0a0a;
+            border: 1px solid #ff3333;
+            color: #fff;
+            font-family: monospace;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background: #ff3333;
+            border: none;
+            color: #0a0a0a;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .auth-switch {
+            margin-top: 18px;
+            color: #888;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .demo-users {
+            margin-top: 15px;
+            padding: 10px;
+            background: #1a1a1a;
+            font-size: 11px;
+            color: #ff6666;
+            border-top: 1px solid #ff3333;
+        }
+    </style>
+</head>
+<body>
+<div class="auth-screen" id="authScreen">
+    <div class="auth-box">
+        <div class="auth-logo">🌐 CENTERNET</div>
+        <div class="auth-title" id="authTitle">ВХОД</div>
+        <input type="text" class="auth-input" id="authLogin" placeholder="Логин (motya)">
+        <input type="text" class="auth-input" id="authTag" placeholder="Тег (@centa.com)">
+        <input type="password" class="auth-input" id="authPassword" placeholder="Пароль">
+        <button class="auth-btn" id="authBtn">ВОЙТИ</button>
+        <div class="auth-switch" id="authSwitch">НЕТ АККАУНТА? ЗАРЕГИСТРИРОВАТЬСЯ</div>
+        <div class="demo-users">📢 ДЕМО-АККАУНТЫ:<br>motya@centa.com пароль: 123<br>drago@centa.com пароль: 123<br>timur@centa.com пароль: 123</div>
+    </div>
+</div>
+
+<div class="browser" id="browser" style="display: none;">
+    <div class="browser-toolbar">
+        <div class="tab-bar" id="tabBar">
+            <div class="tab active" data-tab="0">
+                <span>🏠</span>
+                <span>CENTERNET</span>
+                <button class="tab-close">✕</button>
+            </div>
+        </div>
+        <button class="new-tab" id="newTabBtn">+ НОВАЯ ВКЛАДКА</button>
+        <div class="url-bar">
+            <span>🔍</span>
+            <input type="text" class="url-input" id="urlInput" placeholder="Введите URL или поисковый запрос...">
+            <button class="go-btn" id="goBtn">ПЕРЕЙТИ</button>
+        </div>
+        <div class="user-menu" id="userMenu">
+            <span class="user-avatar" id="userAvatar">👤</span>
+            <span id="userEmail">motya@centa.com</span>
+        </div>
+    </div>
+    <div class="pages-container" id="pagesContainer">
+        <div class="page active" data-page="0">
+            <div class="sar-page">
+                <div style="text-align: center; padding: 40px;">
+                    <h1 style="color: #ff3333; margin-bottom: 30px;">🌐 CENTERNET</h1>
+                    <div style="max-width: 600px; margin: 0 auto;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 30px;">
+                            <input type="text" id="homeSearch" style="flex:1; padding: 15px; background: #1a1a1a; border: 2px solid #ff3333; color: #fff; font-size: 16px;" placeholder="Поиск в Google или введите .sar сайт">
+                            <button onclick="searchFromHome()" style="background: #ff3333; border: none; padding: 15px 30px; color: #0a0a0a; font-weight: bold;">🔍</button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                            <div class="sar-link" onclick="openSarSite('sinopt')" style="background: #1a1a1a; border: 1px solid #ff3333; padding: 20px; text-align: center; cursor: pointer;">☁️ SINOPT.SAR</div>
+                            <div class="sar-link" onclick="openSarSite('fbi')" style="background: #1a1a1a; border: 1px solid #ff3333; padding: 20px; text-align: center; cursor: pointer;">🏛️ FBI.SAR</div>
+                            <div class="sar-link" onclick="openSarSite('gensec')" style="background: #1a1a1a; border: 1px solid #ff3333; padding: 20px; text-align: center; cursor: pointer;">🛡️ GENSEC.SAR</div>
+                            <div class="sar-link" onclick="openSarSite('bmz')" style="background: #1a1a1a; border: 1px solid #ff3333; padding: 20px; text-align: center; cursor: pointer;">⚡ BMZ.SAR</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ===== АККАУНТЫ @centa.com =====
+    let allUsers = JSON.parse(localStorage.getItem('centernet_users')) || {
+        'motya@centa.com': { username: 'motya', email: 'motya@centa.com', password: '123', avatar: '😎', bookmarks: [] },
+        'drago@centa.com': { username: 'drago', email: 'drago@centa.com', password: '123', avatar: '🏃', bookmarks: [] },
+        'timur@centa.com': { username: 'timur', email: 'timur@centa.com', password: '123', avatar: '🤐', bookmarks: [] }
+    };
+    
+    let currentUser = null;
+    let tabs = [{ id: 0, url: 'centernet', title: 'CENTERNET', type: 'sar' }];
+    let activeTab = 0;
+    let nextTabId = 1;
+
+    // ===== ФУНКЦИИ АККАУНТА =====
+    function register(email, password) {
+        if (allUsers[email]) return false;
+        const username = email.split('@')[0];
+        allUsers[email] = {
+            username: username,
+            email: email,
+            password: password,
+            avatar: '👤',
+            bookmarks: []
+        };
+        localStorage.setItem('centernet_users', JSON.stringify(allUsers));
+        return true;
+    }
+
+    function login(email, password) {
+        if (allUsers[email] && allUsers[email].password === password) {
+            currentUser = email;
+            localStorage.setItem('centernet_current', currentUser);
+            return true;
+        }
+        return false;
+    }
+
+    // ===== ОТКРЫТИЕ СТРАНИЦ =====
+    function openUrl(url, tabId = activeTab) {
+        let tab = tabs.find(t => t.id === tabId);
+        if (!tab) return;
+        
+        tab.url = url;
+        
+        // Проверка на .sar сайты
+        if (url.includes('.sar') || url === 'centernet' || url === 'sinopt' || url === 'fbi' || url === 'gensec' || url === 'bmz') {
+            tab.type = 'sar';
+            renderSarPage(tabId, url);
+        } else {
+            tab.type = 'iframe';
+            renderIframePage(tabId, url);
+        }
+        
+        updateUrlBar(url);
+        updateTabTitle(tabId, url);
+    }
+    
+    function renderSarPage(tabId, site) {
+        const pageDiv = document.querySelector(`.page[data-page="${tabId}"]`);
+        if (!pageDiv) return;
+        
+        let content = '';
+        if (site === 'centernet' || site === '') {
+            content = getCenternetHome();
+        } else if (site === 'sinopt' || site === 'sinopt.sar') {
+            content = getSinoptPage();
+        } else if (site === 'fbi' || site === 'fbi.sar') {
+            content = getFBIPage();
+        } else if (site === 'gensec' || site === 'gensec.sar') {
+            content = getGENSECPage();
+        } else if (site === 'bmz' || site === 'bmz.sar') {
+            content = getBMZPage();
+        } else {
+            content = `<div style="text-align:center; padding:50px;"><h2>❌ Сайт ${site} не найден</h2><p>Проверьте правильность адреса</p></div>`;
+        }
+        
+        pageDiv.innerHTML = `<div class="sar-page">${content}</div>`;
+    }
+    
+    function renderIframePage(tabId, url) {
+        const pageDiv = document.querySelector(`.page[data-page="${tabId}"]`);
+        if (!pageDiv) return;
+        
+        // Добавляем https:// если нет протокола
+        let fullUrl = url;
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            fullUrl = 'https://' + url;
+        }
+        
+        pageDiv.innerHTML = `<iframe class="iframe-page" src="${fullUrl}" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>`;
+    }
+    
+    // ===== .SAR СТРАНИЦЫ =====
+    function getCenternetHome() {
+        return `
+            <div style="text-align: center; padding: 40px;">
+                <h1 style="color: #ff3333; margin-bottom: 30px;">🌐 CENTERNET</h1>
+                <div style="max-width: 600px; margin: 0 auto;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 30px;">
+                        <input type="text" id="homeSearchInput" style="flex:1; padding: 15px; background: #1a1a1a; border: 2px solid #ff3333; color: #fff; font-size: 16px;" placeholder="Поиск в Google или введите .sar сайт">
+                        <button onclick="searchFromHome()" style="background: #ff3333; border: none; padding: 15px 30px; color: #0a0a0a; font-weight: bold;">🔍</button>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                        <div onclick="openSarSite('sinopt')" style="background: #1a1a1a; border: 1px solid #ff3333; padding: 20px; text-align: center; cursor: pointer;">☁️ SINOPT.SAR</div>
+                        <div onclick="openSarSite('fbi')" style="background: #1a1a1a; border: 1px solid #ff3333; padding: 20px; text-align: center; cursor: pointer;">🏛️ FBI.SAR</div>
+                        <div onclick="openSarSite('gensec')" style="background: #1a1a1a; border: 1px solid #ff3333; padding: 20px; text-align: center; cursor: pointer;">🛡️ GENSEC.SAR</div>
+                        <div onclick="openSarSite('bmz')" style="background: #1a1a1a; border: 1px solid #ff3333; padding: 20px; text-align: center; cursor: pointer;">⚡ BMZ.SAR</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function getSinoptPage() {
+        return `
+            <div style="text-align: center; padding: 40px;">
+                <h1 style="color: #ff3333;">☁️ SINOPT.SAR</h1>
+                <div id="weatherInfo" style="margin-top: 30px; padding: 20px; background: #1a1a1a; border: 1px solid #ff3333;">
+                    <div style="font-size: 48px;" id="weatherTemp">--°C</div>
+                    <div id="weatherDesc">Загрузка...</div>
+                    <div id="weatherLocation">📍 Сан-Фиерро</div>
+                </div>
+            </div>
+            <script>
+                fetch('https://api.open-meteo.com/v1/forecast?latitude=55.75&longitude=37.62&current_weather=true')
+                    .then(r => r.json())
+                    .then(d => {
+                        document.getElementById('weatherTemp').innerHTML = d.current_weather.temperature + '°C';
+                        document.getElementById('weatherDesc').innerHTML = d.current_weather.windspeed + ' м/с';
+                    })
+                    .catch(() => {
+                        document.getElementById('weatherDesc').innerHTML = 'Ошибка загрузки погоды';
+                    });
+            <\/script>
+        `;
+    }
+    
+    function getFBIPage() {
+        return `
+            <div style="padding: 40px;">
+                <h1 style="color: #ff3333;">🏛️ FBI.SAR</h1>
+                <div style="margin-top: 20px; background: #1a1a1a; padding: 20px; border-left: 4px solid #ff3333;">
+                    <h3>ФБР округа Сан-Андреас</h3>
+                    <p>Директор: Майк Малас</p>
+                    <p>Горячая линия: +1 (555) FBI-HELP</p>
+                    <p>Email: info@fbi.sanandreas.gov</p>
+                </div>
+                <div style="margin-top: 20px; background: #1a1a1a; padding: 20px;">
+                    <h3>Последние новости</h3>
+                    <p>🔹 21.03.2026 — Задержаны подозреваемые в ограблении банка</p>
+                    <p>🔹 20.03.2026 — Пресечена попытка взлома GENSEC</p>
+                    <p>🔹 19.03.2026 — Драго всё ещё должен 100 рублей</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    function getGENSECPage() {
+        return `
+            <div style="padding: 40px;">
+                <h1 style="color: #ff3333;">🛡️ GENSEC.SAR</h1>
+                <div style="margin-top: 20px; background: #1a1a1a; padding: 20px;">
+                    <h3>Частная охранная компания</h3>
+                    <p>Основатель: Майк Малас</p>
+                    <p>Специализация: Охрана банков, кибербезопасность, SWAT-поддержка</p>
+                </div>
+                <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div style="background: #1a1a1a; padding: 15px; text-align: center;">🛡️ Базовый<br>1000$/мес</div>
+                    <div style="background: #1a1a1a; padding: 15px; text-align: center;">⚔️ Плюс<br>5000$/мес</div>
+                    <div style="background: #1a1a1a; padding: 15px; text-align: center;">🏆 Премиум<br>25000$/мес</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function getBMZPage() {
+        return `
+            <div style="padding: 40px;">
+                <h1 style="color: #ff3333;">⚡ BMZ.SAR</h1>
+                <div style="margin-top: 20px; background: #1a1a1a; padding: 20px;">
+                    <h3>Blackmurk Zealwater</h3>
+                    <p>Элитное подразделение специального назначения</p>
+                    <p>Специализация: Антитеррор, контрштурм, защита высокопоставленных лиц</p>
+                </div>
+                <div style="margin-top: 20px;">
+                    <p>⚡ Клокеры | 🫎 Бульдозеры | 🛡️ Щитоносцы | 🐻 Медведи-медики</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // ===== УПРАВЛЕНИЕ ВКЛАДКАМИ =====
+    function createNewTab() {
+        const newId = nextTabId++;
+        tabs.push({ id: newId, url: 'centernet', title: 'Новая вкладка', type: 'sar' });
+        
+        // Добавляем вкладку в панель
+        const tabBar = document.getElementById('tabBar');
+        const tabDiv = document.createElement('div');
+        tabDiv.className = 'tab';
+        tabDiv.setAttribute('data-tab', newId);
+        tabDiv.innerHTML = `<span>🌐</span><span>Новая вкладка</span><button class="tab-close">✕</button>`;
+        tabDiv.onclick = (e) => {
+            if (e.target.classList.contains('tab-close')) {
+                closeTab(newId);
+                e.stopPropagation();
+                return;
+            }
+            switchTab(newId);
+        };
+        tabBar.appendChild(tabDiv);
+        
+        // Добавляем страницу
+        const pagesContainer = document.getElementById('pagesContainer');
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'page';
+        pageDiv.setAttribute('data-page', newId);
+        pageDiv.innerHTML = `<div class="sar-page">${getCenternetHome()}</div>`;
+        pagesContainer.appendChild(pageDiv);
+        
+        switchTab(newId);
+    }
+    
+    function closeTab(tabId) {
+        const index = tabs.findIndex(t => t.id === tabId);
+        if (index === -1) return;
+        if (tabs.length === 1) {
+            createNewTab();
+            closeTab(tabId);
+            return;
+        }
+        
+        tabs.splice(index, 1);
+        document.querySelector(`.tab[data-tab="${tabId}"]`).remove();
+        document.querySelector(`.page[data-page="${tabId}"]`).remove();
+        
+        if (activeTab === tabId) {
+            const newActive = tabs[0]?.id;
+            if (newActive) switchTab(newActive);
+        }
+    }
+    
+    function switchTab(tabId) {
+        activeTab = tabId;
+        
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+        
+        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        document.querySelector(`.page[data-page="${tabId}"]`).classList.add('active');
+        
+        const tab = tabs.find(t => t.id === tabId);
+        if (tab) {
+            updateUrlBar(tab.url);
+        }
+    }
+    
+    function updateUrlBar(url) {
+        document.getElementById('urlInput').value = url;
+    }
+    
+    function updateTabTitle(tabId, url) {
+        const tabDiv = document.querySelector(`.tab[data-tab="${tabId}"]`);
+        if (tabDiv) {
+            const title = url.length > 30 ? url.substring(0, 30) + '...' : url;
+            tabDiv.querySelector('span:last-child').innerText = title;
+        }
+    }
+    
+    // ===== ПОИСК И НАВИГАЦИЯ =====
+    window.searchFromHome = function() {
+        const input = document.getElementById('homeSearchInput');
+        if (input) {
+            const query = input.value;
+            navigateTo(query);
+        }
+    };
+    
+    function navigateTo(query) {
+        if (!query.trim()) return;
+        
+        // Проверка на .sar сайты
+        const sarSites = ['sinopt', 'fbi', 'gensec', 'bmz', 'centernet'];
+        if (sarSites.includes(query.toLowerCase()) || query.includes('.sar')) {
+            openUrl(query, activeTab);
+        } 
+        // Проверка на URL
+        else if (query.includes('.') || query.includes('http')) {
+            openUrl(query, activeTab);
+        }
+        // Иначе поиск в Google
+        else {
+            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+            openUrl(searchUrl, activeTab);
+        }
+    }
+    
+    window.openSarSite = function(site) {
+        openUrl(site, activeTab);
+    };
+    
+    // ===== АВТОРИЗАЦИЯ =====
+    document.getElementById('authBtn').onclick = () => {
+        const login = document.getElementById('authLogin').value.trim();
+        const tag = document.getElementById('authTag').value.trim();
+        const password = document.getElementById('authPassword').value;
+        const email = login + tag;
+        const isLogin = document.getElementById('authTitle').innerText === 'ВХОД';
+        
+        if (isLogin) {
+            if (login(email, password)) {
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('browser').style.display = 'flex';
+                document.getElementById('userEmail').innerText = email;
+                document.getElementById('userAvatar').innerText = allUsers[email]?.avatar || '👤';
+            } else alert('Неверные данные');
+        } else {
+            if (register(email, password)) {
+                alert('Регистрация успешна! Войдите.');
+                document.getElementById('authTitle').innerText = 'ВХОД';
+                document.getElementById('authBtn').innerText = 'ВОЙТИ';
+                document.getElementById('authSwitch').innerHTML = 'НЕТ АККАУНТА? ЗАРЕГИСТРИРОВАТЬСЯ';
+            } else alert('Пользователь уже существует');
+        }
+    };
+    
+    document.getElementById('authSwitch').onclick = () => {
+        const isLogin = document.getElementById('authTitle').innerText === 'ВХОД';
+        if (isLogin) {
+            document.getElementById('authTitle').innerText = 'РЕГИСТРАЦИЯ';
+            document.getElementById('authBtn').innerText = 'ЗАРЕГИСТРИРОВАТЬСЯ';
+            document.getElementById('authSwitch').innerHTML = 'УЖЕ ЕСТЬ АККАУНТ? ВОЙТИ';
+        } else {
+            document.getElementById('authTitle').innerText = 'ВХОД';
+            document.getElementById('authBtn').innerText = 'ВОЙТИ';
+            document.getElementById('authSwitch').innerHTML = 'НЕТ АККАУНТА? ЗАРЕГИСТРИРОВАТЬСЯ';
+        }
+    };
+    
+    document.getElementById('goBtn').onclick = () => {
+        const url = document.getElementById('urlInput').value;
+        navigateTo(url);
+    };
+    
+    document.getElementById('urlInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('goBtn').click();
+        }
+    });
+    
+    document.getElementById('newTabBtn').onclick = () => {
+        createNewTab();
+    };
+    
+    const saved = localStorage.getItem('centernet_current');
+    if (saved && allUsers[saved]) {
+        currentUser = saved;
+        document.getElementById('authScreen').style.display = 'none';
+        document.getElementById('browser').style.display = 'flex';
+        document.getElementById('userEmail').innerText = saved;
+        document.getElementById('userAvatar').innerText = allUsers[saved]?.avatar || '👤';
+    }
+</script>
+</body>
+</html>
