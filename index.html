@@ -43,7 +43,6 @@
             --accent-light: #1e293b;
         }
 
-        /* БРАУЗЕР */
         .browser {
             display: flex;
             flex-direction: column;
@@ -51,7 +50,6 @@
             background: var(--bg-primary);
         }
 
-        /* ВЕРХНЯЯ ПАНЕЛЬ */
         .toolbar {
             background: var(--bg-secondary);
             border-bottom: 1px solid var(--border);
@@ -126,6 +124,7 @@
             border: 1px solid var(--border);
             border-radius: 40px;
             padding: 6px 16px;
+            position: relative;
         }
 
         .url-input {
@@ -159,7 +158,7 @@
             border: 1px solid var(--border);
         }
 
-        .theme-toggle {
+        .theme-toggle, .bookmark-btn {
             background: var(--bg-panel);
             border: 1px solid var(--border);
             border-radius: 30px;
@@ -168,7 +167,6 @@
             font-size: 16px;
         }
 
-        /* СТРАНИЦЫ */
         .pages-container {
             flex: 1;
             position: relative;
@@ -202,7 +200,6 @@
             color: var(--text-primary);
         }
 
-        /* АВТОРИЗАЦИЯ */
         .auth-screen {
             position: fixed;
             top: 0;
@@ -283,6 +280,67 @@
             color: var(--text-secondary);
             border: 1px solid var(--border);
         }
+
+        #bookmarksPanel {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: 320px;
+            max-height: 400px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            z-index: 2000;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .bookmark-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.1s;
+        }
+        .bookmark-item:hover {
+            background: var(--accent-light);
+        }
+        .bookmark-icon {
+            font-size: 20px;
+            color: var(--accent);
+        }
+        .bookmark-info {
+            flex: 1;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .bookmark-title {
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .bookmark-url {
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .bookmark-delete {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 16px;
+            padding: 4px 8px;
+        }
+        .bookmark-delete:hover {
+            color: var(--accent);
+        }
     </style>
 </head>
 <body>
@@ -319,6 +377,8 @@
             <input type="text" class="url-input" id="urlInput" placeholder="Введите URL или поисковый запрос...">
             <button class="go-btn" id="goBtn">Перейти</button>
         </div>
+        <button class="bookmark-btn" id="bookmarkBtn" title="Добавить в закладки">🔖</button>
+        <button class="bookmark-btn" id="bookmarksListBtn" title="Мои закладки">📚</button>
         <button class="theme-toggle" id="themeToggle" title="Сменить тему">🌙</button>
         <div class="user-menu" id="userMenu">
             <span id="userAvatar">👤</span>
@@ -327,15 +387,21 @@
     </div>
     <div class="pages-container" id="pagesContainer">
         <div class="page active" data-page="0">
-            <div class="sar-page" id="homePage">
-                <div style="text-align: center; padding: 40px;">Загрузка...</div>
-            </div>
+            <div class="sar-page" id="homePage"></div>
         </div>
     </div>
 </div>
 
+<div id="bookmarksPanel">
+    <div style="padding: 16px; border-bottom: 1px solid var(--border); font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
+        <span>🔖 Закладки</span>
+        <button id="closeBookmarksPanel" style="background:none; border:none; cursor:pointer; font-size:20px;">✕</button>
+    </div>
+    <div id="bookmarksList"></div>
+</div>
+
 <script>
-    // ===== БАЗА ПОЛЬЗОВАТЕЛЕЙ (localStorage) =====
+    // ===== БАЗА ПОЛЬЗОВАТЕЛЕЙ =====
     let allUsers = JSON.parse(localStorage.getItem('centernet_users'));
     if (!allUsers || Object.keys(allUsers).length === 0) {
         allUsers = {
@@ -347,10 +413,11 @@
     }
 
     let currentUser = null;
-    let tabs = [{ id: 0, url: 'centernet', title: 'Centernet' }];
+    let tabs = [{ id: 0, url: 'centernet', title: 'Centernet', type: 'sar' }];
     let activeTab = 0;
     let nextTabId = 1;
     let isDark = localStorage.getItem('centernet_theme') === 'dark';
+    let bookmarks = [];
 
     // ===== ТЕМА =====
     function setTheme(dark) {
@@ -367,31 +434,7 @@
     if (isDark) setTheme(true);
     document.getElementById('themeToggle').onclick = () => setTheme(!isDark);
 
-    // ===== АККАУНТЫ =====
-    function register(email, password) {
-        if (allUsers[email]) return false;
-        const username = email.split('@')[0];
-        allUsers[email] = {
-            username: username,
-            email: email,
-            password: password,
-            avatar: '👤',
-            bookmarks: []
-        };
-        localStorage.setItem('centernet_users', JSON.stringify(allUsers));
-        return true;
-    }
-
-    function login(email, password) {
-        if (allUsers[email] && allUsers[email].password === password) {
-            currentUser = email;
-            localStorage.setItem('centernet_current', currentUser);
-            return true;
-        }
-        return false;
-    }
-
-    // ===== СТРАНИЦЫ (простая заглушка, позже добавим все .sar) =====
+    // ===== .SAR СТРАНИЦЫ =====
     function getHomePage() {
         return `
             <div style="max-width: 800px; margin: 0 auto;">
@@ -414,41 +457,307 @@
         `;
     }
 
+    function getSinoptPage() {
+        return `
+            <div style="max-width: 500px; margin: 0 auto;">
+                <div style="background: var(--bg-secondary); border-radius: 28px; padding: 30px; text-align: center; border: 1px solid var(--border);">
+                    <div style="font-size: 48px; margin-bottom: 16px;">☁️</div>
+                    <h2 style="color: var(--text-primary); margin-bottom: 8px;">Sinopt.sar</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 24px;">Погода в Сан-Фиерро</p>
+                    <div id="weatherTemp" style="font-size: 56px; font-weight: 300; color: var(--accent);">--°C</div>
+                    <div id="weatherDesc" style="color: var(--text-secondary); margin-top: 12px;">Загрузка...</div>
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-secondary);">
+                        🌍 Данные: реальная погода в Сан-Фиерро
+                    </div>
+                </div>
+            </div>
+            <script>
+                fetch('https://api.open-meteo.com/v1/forecast?latitude=37.77&longitude=-122.42&current_weather=true')
+                    .then(r => r.json())
+                    .then(d => {
+                        document.getElementById('weatherTemp').innerHTML = d.current_weather.temperature + '°C';
+                        document.getElementById('weatherDesc').innerHTML = '💨 Ветер: ' + d.current_weather.windspeed + ' м/с';
+                    })
+                    .catch(() => {
+                        document.getElementById('weatherDesc').innerHTML = '🌤️ +18°C, легкий ветер';
+                    });
+            <\/script>
+        `;
+    }
+
+    function getFBIPage() {
+        return `
+            <div style="max-width: 700px; margin: 0 auto;">
+                <h1 style="color: var(--text-primary); margin-bottom: 24px;">🏛️ FBI.sar</h1>
+                <div style="background: var(--bg-secondary); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--border);">
+                    <h3 style="color: var(--accent); margin-bottom: 16px;">ФБР округа Сан-Андреас</h3>
+                    <p style="color: var(--text-primary); margin-bottom: 8px;">Директор: <strong>Майк Малас</strong></p>
+                    <p style="color: var(--text-primary); margin-bottom: 8px;">Горячая линия: <strong>+1 (555) FBI-HELP</strong></p>
+                    <p style="color: var(--text-primary);">Email: <strong>info@fbi.sanandreas.gov</strong></p>
+                </div>
+                <div style="background: var(--bg-secondary); border-radius: 24px; padding: 24px; border: 1px solid var(--border);">
+                    <h3 style="color: var(--accent); margin-bottom: 16px;">Последние новости</h3>
+                    <p style="color: var(--text-primary); margin-bottom: 12px;">🔹 28.03.2026 — Завершено расследование по делу о захвате школы</p>
+                    <p style="color: var(--text-primary); margin-bottom: 12px;">🔹 27.03.2026 — Пресечена попытка взлома баз данных GENSEC</p>
+                    <p style="color: var(--text-primary);">🔹 26.03.2026 — Драго всё ещё должен 100 рублей</p>
+                </div>
+            </div>
+        `;
+    }
+
+    function getGENSECPage() {
+        return `
+            <div style="max-width: 700px; margin: 0 auto;">
+                <h1 style="color: var(--text-primary); margin-bottom: 24px;">🛡️ GENSEC.sar</h1>
+                <div style="background: var(--bg-secondary); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--border);">
+                    <h3 style="color: var(--accent); margin-bottom: 16px;">Частная охранная компания</h3>
+                    <p style="color: var(--text-primary); margin-bottom: 8px;">Основатель: <strong>Майк Малас</strong></p>
+                    <p style="color: var(--text-primary);">Специализация: охрана банков, кибербезопасность, SWAT-поддержка</p>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                    <div style="background: var(--bg-secondary); border-radius: 20px; padding: 20px; text-align: center; border: 1px solid var(--border);">
+                        <div style="font-size: 28px; margin-bottom: 8px;">🛡️</div>
+                        <div style="font-weight: 600;">Базовый</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">1000$/мес</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); border-radius: 20px; padding: 20px; text-align: center; border: 1px solid var(--border);">
+                        <div style="font-size: 28px; margin-bottom: 8px;">⚔️</div>
+                        <div style="font-weight: 600;">Плюс</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">5000$/мес</div>
+                    </div>
+                    <div style="background: var(--bg-secondary); border-radius: 20px; padding: 20px; text-align: center; border: 1px solid var(--border);">
+                        <div style="font-size: 28px; margin-bottom: 8px;">🏆</div>
+                        <div style="font-weight: 600;">Премиум</div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">25000$/мес</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function getBMZPage() {
+        return `
+            <div style="max-width: 700px; margin: 0 auto;">
+                <h1 style="color: var(--text-primary); margin-bottom: 24px;">⚡ BMZ.sar</h1>
+                <div style="background: var(--bg-secondary); border-radius: 24px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--border);">
+                    <h3 style="color: var(--accent); margin-bottom: 16px;">Blackmurk Zealwater</h3>
+                    <p style="color: var(--text-primary); margin-bottom: 8px;">Элитное подразделение специального назначения</p>
+                    <p style="color: var(--text-primary);">Антитеррор • Контрштурм • Защита VIP</p>
+                </div>
+                <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                    <span style="background: var(--bg-secondary); padding: 8px 20px; border-radius: 40px; border: 1px solid var(--border);">⚡ Клокеры</span>
+                    <span style="background: var(--bg-secondary); padding: 8px 20px; border-radius: 40px; border: 1px solid var(--border);">🫎 Бульдозеры</span>
+                    <span style="background: var(--bg-secondary); padding: 8px 20px; border-radius: 40px; border: 1px solid var(--border);">🛡️ Щитоносцы</span>
+                    <span style="background: var(--bg-secondary); padding: 8px 20px; border-radius: 40px; border: 1px solid var(--border);">🐻 Медведи-медики</span>
+                </div>
+            </div>
+        `;
+    }
+
+    function getSarPageContent(site) {
+        if (site === 'sinopt') return getSinoptPage();
+        if (site === 'fbi') return getFBIPage();
+        if (site === 'gensec') return getGENSECPage();
+        if (site === 'bmz') return getBMZPage();
+        return getHomePage();
+    }
+
+    // ===== ИСТОРИЯ =====
+    function getHistory() {
+        if (!currentUser) return [];
+        return JSON.parse(localStorage.getItem(`centernet_history_${currentUser}`)) || [];
+    }
+
+    function saveToHistory(url) {
+        if (!currentUser) return;
+        let history = getHistory();
+        history = [url, ...history.filter(u => u !== url)].slice(0, 50);
+        localStorage.setItem(`centernet_history_${currentUser}`, JSON.stringify(history));
+    }
+
+    function showHistorySuggestions() {
+        const history = getHistory();
+        if (history.length === 0) return;
+        
+        const oldMenu = document.getElementById('historySuggestions');
+        if (oldMenu) oldMenu.remove();
+        
+        const menu = document.createElement('div');
+        menu.id = 'historySuggestions';
+        menu.style.cssText = `
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-top: 4px;
+            z-index: 1000;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+        `;
+        
+        history.slice(0, 8).forEach(url => {
+            const item = document.createElement('div');
+            item.style.cssText = `padding: 12px 16px; cursor: pointer; color: var(--text-primary); font-size: 13px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px;`;
+            item.innerHTML = `<span style="color: var(--accent);">🕒</span><span style="flex:1; overflow:hidden; text-overflow:ellipsis;">${url}</span>`;
+            item.onclick = () => { navigateTo(url); menu.remove(); };
+            menu.appendChild(item);
+        });
+        
+        const container = document.querySelector('.url-bar');
+        container.appendChild(menu);
+        setTimeout(() => {
+            document.addEventListener('click', function closeMenu(e) {
+                if (!menu.contains(e.target) && !document.getElementById('urlInput').contains(e.target)) {
+                    menu.remove();
+                    document.removeEventListener('click', closeMenu);
+                }
+            });
+        }, 100);
+    }
+
+    // ===== ЗАКЛАДКИ =====
+    function loadBookmarks() {
+        if (!currentUser) return;
+        bookmarks = JSON.parse(localStorage.getItem(`centernet_bookmarks_${currentUser}`)) || [];
+        updateBookmarksList();
+    }
+
+    function saveBookmarks() {
+        if (!currentUser) return;
+        localStorage.setItem(`centernet_bookmarks_${currentUser}`, JSON.stringify(bookmarks));
+    }
+
+    function addBookmark() {
+        const url = document.getElementById('urlInput').value;
+        if (!url) return;
+        const title = url.length > 40 ? url.substring(0, 40) + '...' : url;
+        if (bookmarks.some(b => b.url === url)) {
+            showToast('❌ Уже в закладках');
+            return;
+        }
+        bookmarks.unshift({ url, title, date: new Date().toLocaleString() });
+        bookmarks = bookmarks.slice(0, 20);
+        saveBookmarks();
+        updateBookmarksList();
+        showToast('🔖 Добавлено в закладки');
+    }
+
+    function removeBookmark(url) {
+        bookmarks = bookmarks.filter(b => b.url !== url);
+        saveBookmarks();
+        updateBookmarksList();
+        showToast('🗑️ Удалено из закладок');
+    }
+
+    function updateBookmarksList() {
+        const list = document.getElementById('bookmarksList');
+        if (!list) return;
+        if (bookmarks.length === 0) {
+            list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">📭 Нет закладок</div>';
+            return;
+        }
+        list.innerHTML = bookmarks.map(b => `
+            <div class="bookmark-item">
+                <div class="bookmark-icon">🔖</div>
+                <div class="bookmark-info" onclick="navigateTo('${b.url.replace(/'/g, "\\'")}')">
+                    <div class="bookmark-title">${escapeHtml(b.title)}</div>
+                    <div class="bookmark-url">${escapeHtml(b.url)}</div>
+                </div>
+                <button class="bookmark-delete" onclick="removeBookmark('${b.url.replace(/'/g, "\\'")}')">✕</button>
+            </div>
+        `).join('');
+    }
+
+    function showToast(message) {
+        let toast = document.getElementById('centernetToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'centernetToast';
+            toast.style.cssText = `position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; padding: 12px 24px; border-radius: 40px; font-size: 14px; z-index: 10000; opacity: 0; transition: opacity 0.2s; pointer-events: none;`;
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.style.opacity = '1';
+        setTimeout(() => toast.style.opacity = '0', 2000);
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m] || m);
+    }
+
+    // ===== НАВИГАЦИЯ =====
+    function navigateTo(query) {
+        if (!query.trim()) return;
+        const lower = query.toLowerCase();
+        const sarSites = ['sinopt', 'fbi', 'gensec', 'bmz', 'centernet'];
+        
+        if (sarSites.includes(lower)) {
+            openSarSite(lower);
+        } else if (lower.includes('.') || lower.includes('http') || lower.includes('www')) {
+            let url = lower;
+            if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+            const tab = tabs.find(t => t.id === activeTab);
+            if (tab) { tab.url = url; tab.type = 'iframe'; }
+            renderIframePage(activeTab, url);
+            document.getElementById('urlInput').value = url;
+            saveToHistory(url);
+        } else {
+            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+            const tab = tabs.find(t => t.id === activeTab);
+            if (tab) { tab.url = searchUrl; tab.type = 'iframe'; }
+            renderIframePage(activeTab, searchUrl);
+            document.getElementById('urlInput').value = searchUrl;
+            saveToHistory(searchUrl);
+        }
+        saveTabs();
+    }
+
+    function renderIframePage(tabId, url) {
+        const pageDiv = document.querySelector(`.page[data-page="${tabId}"]`);
+        if (pageDiv) pageDiv.innerHTML = `<iframe class="iframe-page" src="${url}" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>`;
+    }
+
     function renderPage(tabId, url) {
         const pageDiv = document.querySelector(`.page[data-page="${tabId}"]`);
         if (!pageDiv) return;
-        let content = '<div class="sar-page">' + getHomePage() + '</div>';
-        pageDiv.innerHTML = content;
+        let content = '';
+        if (url === 'centernet' || url === '') content = getHomePage();
+        else if (url === 'sinopt') content = getSinoptPage();
+        else if (url === 'fbi') content = getFBIPage();
+        else if (url === 'gensec') content = getGENSECPage();
+        else if (url === 'bmz') content = getBMZPage();
+        else content = `<div style="text-align:center; padding:50px;"><h2>❌ Сайт не найден</h2></div>`;
+        pageDiv.innerHTML = `<div class="sar-page">${content}</div>`;
+        if (url === 'centernet') setTimeout(() => {
+            const searchInput = document.getElementById('homeSearch');
+            if (searchInput) searchInput.onkeypress = (e) => { if (e.key === 'Enter') searchFromHome(); };
+        }, 50);
     }
 
     function openSarSite(site) {
         const tab = tabs.find(t => t.id === activeTab);
-        if (tab) tab.url = site;
+        if (tab) { tab.url = site; tab.type = 'sar'; }
         renderPage(activeTab, site);
         document.getElementById('urlInput').value = site;
+        saveToHistory(site);
+        saveTabs();
     }
-
-    window.openSarSite = openSarSite;
-    window.searchFromHome = function() {
-        const input = document.getElementById('homeSearch');
-        if (input && input.value) alert('Поиск в разработке. Пока можно открывать .sar сайты.');
-    };
 
     // ===== ВКЛАДКИ =====
     function createNewTab() {
         const newId = nextTabId++;
-        tabs.push({ id: newId, url: 'centernet', title: 'Centernet' });
+        tabs.push({ id: newId, url: 'centernet', title: 'Centernet', type: 'sar' });
         const tabBar = document.getElementById('tabBar');
         const tabDiv = document.createElement('div');
         tabDiv.className = 'tab';
         tabDiv.setAttribute('data-tab', newId);
         tabDiv.innerHTML = `<span>🏠</span><span>Centernet</span><button class="tab-close">✕</button>`;
         tabDiv.onclick = (e) => {
-            if (e.target.classList.contains('tab-close')) {
-                closeTab(newId);
-                e.stopPropagation();
-                return;
-            }
+            if (e.target.classList.contains('tab-close')) { closeTab(newId); e.stopPropagation(); return; }
             switchTab(newId);
         };
         tabBar.appendChild(tabDiv);
@@ -456,9 +765,10 @@
         const pageDiv = document.createElement('div');
         pageDiv.className = 'page';
         pageDiv.setAttribute('data-page', newId);
-        pageDiv.innerHTML = '<div class="sar-page">' + getHomePage() + '</div>';
+        pageDiv.innerHTML = `<div class="sar-page">${getHomePage()}</div>`;
         pagesContainer.appendChild(pageDiv);
         switchTab(newId);
+        saveTabs();
     }
 
     function closeTab(tabId) {
@@ -474,19 +784,87 @@
             const newActive = tabs[0]?.id;
             if (newActive) switchTab(newActive);
         }
+        saveTabs();
     }
 
     function switchTab(tabId) {
         activeTab = tabId;
-        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
-        document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelector(`.page[data-page="${tabId}"]`).classList.add('active');
         const tab = tabs.find(t => t.id === tabId);
         if (tab) document.getElementById('urlInput').value = tab.url;
     }
 
-    // ===== АВТОРИЗАЦИЯ =====
+    function saveTabs() {
+        if (!currentUser) return;
+        const tabsToSave = tabs.map(t => ({ id: t.id, url: t.url, title: t.title, type: t.type }));
+        localStorage.setItem(`centernet_tabs_${currentUser}`, JSON.stringify(tabsToSave));
+        localStorage.setItem(`centernet_activeTab_${currentUser}`, activeTab);
+    }
+
+    function loadTabs() {
+        if (!currentUser) return;
+        const savedTabs = localStorage.getItem(`centernet_tabs_${currentUser}`);
+        const savedActive = localStorage.getItem(`centernet_activeTab_${currentUser}`);
+        if (savedTabs) {
+            const parsed = JSON.parse(savedTabs);
+            if (parsed.length > 0) {
+                while (tabs.length > 0) closeTab(tabs[0].id);
+                parsed.forEach(tab => {
+                    const newId = nextTabId++;
+                    tabs.push({ id: newId, url: tab.url, title: tab.title, type: tab.type });
+                    const tabBar = document.getElementById('tabBar');
+                    const tabDiv = document.createElement('div');
+                    tabDiv.className = 'tab';
+                    tabDiv.setAttribute('data-tab', newId);
+                    tabDiv.innerHTML = `<span>${tab.url === 'centernet' ? '🏠' : '🌐'}</span><span>${tab.title}</span><button class="tab-close">✕</button>`;
+                    tabDiv.onclick = (e) => {
+                        if (e.target.classList.contains('tab-close')) { closeTab(newId); e.stopPropagation(); return; }
+                        switchTab(newId);
+                    };
+                    tabBar.appendChild(tabDiv);
+                    const pagesContainer = document.getElementById('pagesContainer');
+                    const pageDiv = document.createElement('div');
+                    pageDiv.className = 'page';
+                    pageDiv.setAttribute('data-page', newId);
+                    pageDiv.innerHTML = tab.type === 'iframe' ? `<iframe class="iframe-page" src="${tab.url}"></iframe>` : `<div class="sar-page">${getSarPageContent(tab.url)}</div>`;
+                    pagesContainer.appendChild(pageDiv);
+                });
+                if (savedActive && tabs.some(t => t.id == savedActive)) switchTab(parseInt(savedActive));
+                else if (tabs.length > 0) switchTab(tabs[0].id);
+            }
+        }
+    }
+
+    // ===== АККАУНТЫ =====
+    function register(email, password) {
+        if (allUsers[email]) return false;
+        const username = email.split('@')[0];
+        allUsers[email] = { username, email, password, avatar: '👤', bookmarks: [] };
+        localStorage.setItem('centernet_users', JSON.stringify(allUsers));
+        return true;
+    }
+
+    function login(email, password) {
+        if (allUsers[email] && allUsers[email].password === password) {
+            currentUser = email;
+            localStorage.setItem('centernet_current', currentUser);
+            return true;
+        }
+        return false;
+    }
+
+    function initApp() {
+        document.getElementById('userEmail').innerText = currentUser;
+        document.getElementById('userAvatar').innerHTML = allUsers[currentUser]?.avatar || '👤';
+        loadBookmarks();
+        loadTabs();
+        updateBookmarksList();
+    }
+
+    // ===== СОБЫТИЯ =====
     document.getElementById('authBtn').onclick = () => {
         const login = document.getElementById('authLogin').value.trim();
         const tag = document.getElementById('authTag').value.trim();
@@ -497,9 +875,7 @@
             if (login(email, password)) {
                 document.getElementById('authScreen').style.display = 'none';
                 document.getElementById('browser').style.display = 'flex';
-                document.getElementById('userEmail').innerText = email;
-                document.getElementById('userAvatar').innerHTML = allUsers[email]?.avatar || '👤';
-                renderPage(0, 'centernet');
+                initApp();
             } else alert('Неверные данные');
         } else {
             if (register(email, password)) {
@@ -525,20 +901,31 @@
     };
 
     document.getElementById('newTabBtn').onclick = () => createNewTab();
-    document.getElementById('goBtn').onclick = () => {
-        const url = document.getElementById('urlInput').value;
-        if (url.includes('.sar')) openSarSite(url.split('.')[0]);
-        else alert('Пока можно открывать только .sar сайты (sinopt, fbi, gensec, bmz)');
+    document.getElementById('goBtn').onclick = () => { const url = document.getElementById('urlInput').value.trim(); if (url) navigateTo(url); };
+    document.getElementById('urlInput').addEventListener('focus', showHistorySuggestions);
+    document.getElementById('urlInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('goBtn').click(); });
+    document.getElementById('bookmarkBtn').onclick = () => addBookmark();
+    document.getElementById('bookmarksListBtn').onclick = () => {
+        const panel = document.getElementById('bookmarksPanel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        updateBookmarksList();
     };
+    document.getElementById('closeBookmarksPanel').onclick = () => document.getElementById('bookmarksPanel').style.display = 'none';
+
+    window.navigateTo = navigateTo;
+    window.openSarSite = openSarSite;
+    window.searchFromHome = () => {
+        const input = document.getElementById('homeSearch');
+        if (input && input.value) navigateTo(input.value);
+    };
+    window.removeBookmark = removeBookmark;
 
     const saved = localStorage.getItem('centernet_current');
     if (saved && allUsers[saved]) {
         currentUser = saved;
         document.getElementById('authScreen').style.display = 'none';
         document.getElementById('browser').style.display = 'flex';
-        document.getElementById('userEmail').innerText = saved;
-        document.getElementById('userAvatar').innerHTML = allUsers[saved]?.avatar || '👤';
-        renderPage(0, 'centernet');
+        initApp();
     }
 </script>
 </body>
