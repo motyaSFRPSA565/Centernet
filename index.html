@@ -9,7 +9,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            image-rendering: crisp-edges;
         }
 
         body {
@@ -44,6 +43,7 @@
             --accent-light: #1e293b;
         }
 
+        /* БРАУЗЕР */
         .browser {
             display: flex;
             flex-direction: column;
@@ -52,20 +52,20 @@
         }
 
         /* ВЕРХНЯЯ ПАНЕЛЬ */
-        .browser-toolbar {
+        .toolbar {
             background: var(--bg-secondary);
             border-bottom: 1px solid var(--border);
-            padding: 8px 12px;
+            padding: 8px 16px;
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
             flex-wrap: wrap;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
 
-        .tab-bar {
+        .tabs {
             display: flex;
-            gap: 2px;
+            gap: 4px;
             overflow-x: auto;
             flex: 1;
         }
@@ -74,15 +74,15 @@
             background: var(--bg-panel);
             border: 1px solid var(--border);
             border-bottom: none;
-            padding: 8px 16px;
+            padding: 8px 20px;
             color: var(--text-primary);
             font-size: 13px;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             white-space: nowrap;
-            border-radius: 8px 8px 0 0;
+            border-radius: 12px 12px 0 0;
         }
 
         .tab.active {
@@ -98,8 +98,8 @@
             color: var(--text-secondary);
             cursor: pointer;
             font-size: 16px;
-            width: 20px;
-            border-radius: 4px;
+            width: 22px;
+            border-radius: 6px;
         }
 
         .tab-close:hover {
@@ -110,11 +110,11 @@
         .new-tab {
             background: var(--accent-light);
             border: 1px solid var(--border);
-            padding: 8px 12px;
+            padding: 6px 14px;
+            border-radius: 20px;
             cursor: pointer;
+            font-size: 13px;
             color: var(--text-primary);
-            border-radius: 8px;
-            font-size: 12px;
         }
 
         .url-bar {
@@ -124,8 +124,8 @@
             align-items: center;
             background: var(--bg-primary);
             border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 6px 12px;
+            border-radius: 40px;
+            padding: 6px 16px;
         }
 
         .url-input {
@@ -135,30 +135,26 @@
             color: var(--text-primary);
             font-size: 14px;
             outline: none;
-            padding: 6px 0;
+            padding: 8px 0;
         }
 
         .go-btn {
             background: var(--accent);
             border: none;
-            padding: 6px 16px;
+            padding: 6px 20px;
+            border-radius: 30px;
             color: white;
             cursor: pointer;
-            border-radius: 20px;
             font-weight: 500;
-        }
-
-        .go-btn:hover {
-            background: var(--accent-hover);
         }
 
         .user-menu {
             display: flex;
-            gap: 10px;
             align-items: center;
+            gap: 12px;
             background: var(--accent-light);
-            padding: 6px 12px;
-            border-radius: 24px;
+            padding: 5px 12px;
+            border-radius: 30px;
             cursor: pointer;
             border: 1px solid var(--border);
         }
@@ -166,8 +162,8 @@
         .theme-toggle {
             background: var(--bg-panel);
             border: 1px solid var(--border);
+            border-radius: 30px;
             padding: 6px 12px;
-            border-radius: 24px;
             cursor: pointer;
             font-size: 16px;
         }
@@ -222,35 +218,35 @@
 
         .auth-box {
             background: var(--bg-secondary);
-            border-radius: 24px;
+            border-radius: 28px;
             padding: 40px;
             width: 380px;
             text-align: center;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
             border: 1px solid var(--border);
         }
 
         .auth-logo {
             font-size: 48px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .auth-title {
             font-size: 24px;
             color: var(--text-primary);
-            margin-bottom: 25px;
+            margin-bottom: 28px;
             font-weight: 500;
         }
 
         .auth-input {
             width: 100%;
-            padding: 12px 16px;
-            margin-bottom: 15px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
             background: var(--bg-primary);
             border: 1px solid var(--border);
-            border-radius: 12px;
+            border-radius: 24px;
             color: var(--text-primary);
-            font-size: 14px;
+            font-size: 15px;
             outline: none;
         }
 
@@ -263,89 +259,29 @@
             padding: 12px;
             background: var(--accent);
             border: none;
-            border-radius: 12px;
+            border-radius: 30px;
             color: white;
             cursor: pointer;
             font-weight: 500;
             font-size: 16px;
-            margin-top: 5px;
-        }
-
-        .auth-btn:hover {
-            background: var(--accent-hover);
+            margin-top: 8px;
         }
 
         .auth-switch {
-            margin-top: 18px;
+            margin-top: 20px;
             color: var(--accent);
             font-size: 13px;
             cursor: pointer;
         }
 
         .demo-users {
-            margin-top: 20px;
+            margin-top: 24px;
             padding: 12px;
             background: var(--accent-light);
-            border-radius: 12px;
+            border-radius: 20px;
             font-size: 12px;
             color: var(--text-secondary);
             border: 1px solid var(--border);
-        }
-
-        /* КАРТОЧКИ .SAR */
-        .sar-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
-        }
-
-        .sar-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .sar-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-            border-color: var(--accent);
-        }
-
-        .sar-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-        }
-
-        .sar-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-
-        .sar-desc {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        /* ПОГОДА */
-        .weather-card {
-            background: var(--bg-secondary);
-            border-radius: 24px;
-            padding: 30px;
-            text-align: center;
-            border: 1px solid var(--border);
-        }
-
-        .weather-temp {
-            font-size: 64px;
-            font-weight: 300;
-            color: var(--accent);
         }
     </style>
 </head>
@@ -369,8 +305,8 @@
 </div>
 
 <div class="browser" id="browser" style="display: none;">
-    <div class="browser-toolbar">
-        <div class="tab-bar" id="tabBar">
+    <div class="toolbar">
+        <div class="tabs" id="tabBar">
             <div class="tab active" data-tab="0">
                 <span>🏠</span>
                 <span>Centernet</span>
@@ -392,15 +328,24 @@
     <div class="pages-container" id="pagesContainer">
         <div class="page active" data-page="0">
             <div class="sar-page" id="homePage">
-                <!-- загрузится через JS -->
+                <div style="text-align: center; padding: 40px;">Загрузка...</div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // ===== ПЕРЕМЕННЫЕ =====
-    let allUsers = JSON.parse(localStorage.getItem('centernet_users')) || {};
+    // ===== БАЗА ПОЛЬЗОВАТЕЛЕЙ (localStorage) =====
+    let allUsers = JSON.parse(localStorage.getItem('centernet_users'));
+    if (!allUsers || Object.keys(allUsers).length === 0) {
+        allUsers = {
+            'motya@centa.com': { username: 'motya', email: 'motya@centa.com', password: '123', avatar: '😎', bookmarks: [] },
+            'drago@centa.com': { username: 'drago', email: 'drago@centa.com', password: '123', avatar: '🏃', bookmarks: [] },
+            'timur@centa.com': { username: 'timur', email: 'timur@centa.com', password: '123', avatar: '🤐', bookmarks: [] }
+        };
+        localStorage.setItem('centernet_users', JSON.stringify(allUsers));
+    }
+
     let currentUser = null;
     let tabs = [{ id: 0, url: 'centernet', title: 'Centernet' }];
     let activeTab = 0;
@@ -419,9 +364,8 @@
         localStorage.setItem('centernet_theme', dark ? 'dark' : 'light');
         isDark = dark;
     }
-
-    document.getElementById('themeToggle').onclick = () => setTheme(!isDark);
     if (isDark) setTheme(true);
+    document.getElementById('themeToggle').onclick = () => setTheme(!isDark);
 
     // ===== АККАУНТЫ =====
     function register(email, password) {
@@ -447,137 +391,24 @@
         return false;
     }
 
-    // ===== СТРАНИЦЫ =====
+    // ===== СТРАНИЦЫ (простая заглушка, позже добавим все .sar) =====
     function getHomePage() {
         return `
             <div style="max-width: 800px; margin: 0 auto;">
                 <div style="text-align: center; margin-bottom: 40px;">
                     <div style="font-size: 64px; margin-bottom: 16px;">🌐</div>
-                    <h1 style="color: var(--text-primary); margin-bottom: 8px;">Centernet</h1>
-                    <p style="color: var(--text-secondary);">Поиск в интернете и .sar сайты</p>
+                    <h1 style="color: var(--text-primary);">Centernet</h1>
+                    <p style="color: var(--text-secondary);">Ваш браузер в Сан-Фиерро</p>
                 </div>
                 <div style="display: flex; gap: 12px; margin-bottom: 40px;">
                     <input type="text" id="homeSearch" style="flex:1; padding: 14px 20px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 40px; color: var(--text-primary); font-size: 16px;" placeholder="Поиск в Google или .sar сайт">
                     <button onclick="searchFromHome()" style="background: var(--accent); border: none; padding: 14px 28px; border-radius: 40px; color: white; font-weight: 500; cursor: pointer;">🔍</button>
                 </div>
-                <div class="sar-grid">
-                    <div class="sar-card" onclick="openSarSite('sinopt')">
-                        <div class="sar-icon">☁️</div>
-                        <div class="sar-title">Sinopt.sar</div>
-                        <div class="sar-desc">Погода в Сан-Фиерро</div>
-                    </div>
-                    <div class="sar-card" onclick="openSarSite('fbi')">
-                        <div class="sar-icon">🏛️</div>
-                        <div class="sar-title">FBI.sar</div>
-                        <div class="sar-desc">ФБР Сан-Андреас</div>
-                    </div>
-                    <div class="sar-card" onclick="openSarSite('gensec')">
-                        <div class="sar-icon">🛡️</div>
-                        <div class="sar-title">GENSEC.sar</div>
-                        <div class="sar-desc">Частная охрана</div>
-                    </div>
-                    <div class="sar-card" onclick="openSarSite('bmz')">
-                        <div class="sar-icon">⚡</div>
-                        <div class="sar-title">BMZ.sar</div>
-                        <div class="sar-desc">Элитное подразделение</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    function getSinoptPage() {
-        return `
-            <div style="max-width: 500px; margin: 0 auto;">
-                <div class="weather-card">
-                    <div style="font-size: 48px; margin-bottom: 16px;">☁️</div>
-                    <h2 style="color: var(--text-primary); margin-bottom: 8px;">Sinopt.sar</h2>
-                    <p style="color: var(--text-secondary); margin-bottom: 24px;">Погода в Сан-Фиерро</p>
-                    <div id="weatherTemp" class="weather-temp">--°C</div>
-                    <div id="weatherDesc" style="color: var(--text-secondary); margin-top: 12px;">Загрузка...</div>
-                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-secondary);">
-                        🌍 Данные: Сан-Фиерро (реальная погода)
-                    </div>
-                </div>
-            </div>
-            <script>
-                fetch('https://api.open-meteo.com/v1/forecast?latitude=37.77&longitude=-122.42&current_weather=true')
-                    .then(r => r.json())
-                    .then(d => {
-                        document.getElementById('weatherTemp').innerHTML = d.current_weather.temperature + '°C';
-                        document.getElementById('weatherDesc').innerHTML = '💨 Ветер: ' + d.current_weather.windspeed + ' м/с';
-                    })
-                    .catch(() => {
-                        document.getElementById('weatherDesc').innerHTML = '🌤️ +18°C, легкий ветер';
-                    });
-            <\/script>
-        `;
-    }
-
-    function getFBIPage() {
-        return `
-            <div style="max-width: 700px; margin: 0 auto;">
-                <h1 style="color: var(--text-primary); margin-bottom: 24px;">🏛️ FBI.sar</h1>
-                <div style="background: var(--bg-secondary); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--border);">
-                    <h3 style="color: var(--accent); margin-bottom: 16px;">ФБР округа Сан-Андреас</h3>
-                    <p style="color: var(--text-primary); margin-bottom: 8px;">Директор: <strong>Майк Малас</strong></p>
-                    <p style="color: var(--text-primary); margin-bottom: 8px;">Горячая линия: <strong>+1 (555) FBI-HELP</strong></p>
-                    <p style="color: var(--text-primary);">Email: <strong>info@fbi.sanandreas.gov</strong></p>
-                </div>
-                <div style="background: var(--bg-secondary); border-radius: 16px; padding: 24px; border: 1px solid var(--border);">
-                    <h3 style="color: var(--accent); margin-bottom: 16px;">Последние новости</h3>
-                    <p style="color: var(--text-primary); margin-bottom: 12px;">🔹 21.03.2026 — Задержаны подозреваемые в ограблении банка</p>
-                    <p style="color: var(--text-primary); margin-bottom: 12px;">🔹 20.03.2026 — Пресечена попытка взлома GENSEC</p>
-                    <p style="color: var(--text-primary);">🔹 19.03.2026 — Драго всё ещё должен 100 рублей</p>
-                </div>
-            </div>
-        `;
-    }
-
-    function getGENSECPage() {
-        return `
-            <div style="max-width: 700px; margin: 0 auto;">
-                <h1 style="color: var(--text-primary); margin-bottom: 24px;">🛡️ GENSEC.sar</h1>
-                <div style="background: var(--bg-secondary); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--border);">
-                    <h3 style="color: var(--accent); margin-bottom: 16px;">Частная охранная компания</h3>
-                    <p style="color: var(--text-primary); margin-bottom: 8px;">Основатель: <strong>Майк Малас</strong></p>
-                    <p style="color: var(--text-primary);">Специализация: охрана банков, кибербезопасность, SWAT-поддержка</p>
-                </div>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
-                    <div style="background: var(--bg-secondary); border-radius: 16px; padding: 20px; text-align: center; border: 1px solid var(--border);">
-                        <div style="font-size: 28px; margin-bottom: 8px;">🛡️</div>
-                        <div style="font-weight: 600;">Базовый</div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">1000$/мес</div>
-                    </div>
-                    <div style="background: var(--bg-secondary); border-radius: 16px; padding: 20px; text-align: center; border: 1px solid var(--border);">
-                        <div style="font-size: 28px; margin-bottom: 8px;">⚔️</div>
-                        <div style="font-weight: 600;">Плюс</div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">5000$/мес</div>
-                    </div>
-                    <div style="background: var(--bg-secondary); border-radius: 16px; padding: 20px; text-align: center; border: 1px solid var(--border);">
-                        <div style="font-size: 28px; margin-bottom: 8px;">🏆</div>
-                        <div style="font-weight: 600;">Премиум</div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">25000$/мес</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    function getBMZPage() {
-        return `
-            <div style="max-width: 700px; margin: 0 auto;">
-                <h1 style="color: var(--text-primary); margin-bottom: 24px;">⚡ BMZ.sar</h1>
-                <div style="background: var(--bg-secondary); border-radius: 16px; padding: 24px; margin-bottom: 20px; border: 1px solid var(--border);">
-                    <h3 style="color: var(--accent); margin-bottom: 16px;">Blackmurk Zealwater</h3>
-                    <p style="color: var(--text-primary); margin-bottom: 8px;">Элитное подразделение специального назначения</p>
-                    <p style="color: var(--text-primary);">Антитеррор • Контрштурм • Защита VIP</p>
-                </div>
-                <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-                    <span style="background: var(--bg-secondary); padding: 8px 16px; border-radius: 40px; border: 1px solid var(--border);">⚡ Клокеры</span>
-                    <span style="background: var(--bg-secondary); padding: 8px 16px; border-radius: 40px; border: 1px solid var(--border);">🫎 Бульдозеры</span>
-                    <span style="background: var(--bg-secondary); padding: 8px 16px; border-radius: 40px; border: 1px solid var(--border);">🛡️ Щитоносцы</span>
-                    <span style="background: var(--bg-secondary); padding: 8px 16px; border-radius: 40px; border: 1px solid var(--border);">🐻 Медведи-медики</span>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                    <div onclick="openSarSite('sinopt')" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 20px; padding: 24px; text-align: center; cursor: pointer;">☁️ SINOPT.SAR</div>
+                    <div onclick="openSarSite('fbi')" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 20px; padding: 24px; text-align: center; cursor: pointer;">🏛️ FBI.SAR</div>
+                    <div onclick="openSarSite('gensec')" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 20px; padding: 24px; text-align: center; cursor: pointer;">🛡️ GENSEC.SAR</div>
+                    <div onclick="openSarSite('bmz')" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 20px; padding: 24px; text-align: center; cursor: pointer;">⚡ BMZ.SAR</div>
                 </div>
             </div>
         `;
@@ -586,77 +417,27 @@
     function renderPage(tabId, url) {
         const pageDiv = document.querySelector(`.page[data-page="${tabId}"]`);
         if (!pageDiv) return;
-
-        let content = '';
-        if (url === 'centernet') content = getHomePage();
-        else if (url === 'sinopt') content = getSinoptPage();
-        else if (url === 'fbi') content = getFBIPage();
-        else if (url === 'gensec') content = getGENSECPage();
-        else if (url === 'bmz') content = getBMZPage();
-        else if (url.includes('http')) {
-            pageDiv.innerHTML = `<iframe class="iframe-page" src="${url}" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>`;
-            return;
-        } else {
-            content = `<div style="text-align:center; padding:50px;"><h2>❌ Сайт не найден</h2><p>Проверьте правильность адреса</p></div>`;
-        }
-        
-        pageDiv.innerHTML = `<div class="sar-page">${content}</div>`;
-        
-        // Привязываем поиск после рендера
-        if (url === 'centernet') {
-            setTimeout(() => {
-                const searchInput = document.getElementById('homeSearch');
-                if (searchInput) {
-                    searchInput.onkeypress = (e) => { if (e.key === 'Enter') searchFromHome(); };
-                }
-            }, 50);
-        }
+        let content = '<div class="sar-page">' + getHomePage() + '</div>';
+        pageDiv.innerHTML = content;
     }
 
-    function navigateTo(query) {
-        if (!query.trim()) return;
-        
-        const lower = query.toLowerCase();
-        const sarSites = ['sinopt', 'fbi', 'gensec', 'bmz', 'centernet'];
-        
-        if (sarSites.includes(lower)) {
-            const tab = tabs.find(t => t.id === activeTab);
-            if (tab) tab.url = lower;
-            renderPage(activeTab, lower);
-            document.getElementById('urlInput').value = lower;
-        } else if (lower.includes('.') || lower.includes('http')) {
-            let url = lower;
-            if (!url.startsWith('http')) url = 'https://' + url;
-            const tab = tabs.find(t => t.id === activeTab);
-            if (tab) tab.url = url;
-            renderPage(activeTab, url);
-            document.getElementById('urlInput').value = url;
-        } else {
-            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-            const tab = tabs.find(t => t.id === activeTab);
-            if (tab) tab.url = searchUrl;
-            renderPage(activeTab, searchUrl);
-            document.getElementById('urlInput').value = searchUrl;
-        }
-    }
-
-    window.openSarSite = function(site) {
+    function openSarSite(site) {
         const tab = tabs.find(t => t.id === activeTab);
         if (tab) tab.url = site;
         renderPage(activeTab, site);
         document.getElementById('urlInput').value = site;
-    };
+    }
 
+    window.openSarSite = openSarSite;
     window.searchFromHome = function() {
         const input = document.getElementById('homeSearch');
-        if (input) navigateTo(input.value);
+        if (input && input.value) alert('Поиск в разработке. Пока можно открывать .sar сайты.');
     };
 
     // ===== ВКЛАДКИ =====
     function createNewTab() {
         const newId = nextTabId++;
         tabs.push({ id: newId, url: 'centernet', title: 'Centernet' });
-        
         const tabBar = document.getElementById('tabBar');
         const tabDiv = document.createElement('div');
         tabDiv.className = 'tab';
@@ -671,33 +452,24 @@
             switchTab(newId);
         };
         tabBar.appendChild(tabDiv);
-        
         const pagesContainer = document.getElementById('pagesContainer');
         const pageDiv = document.createElement('div');
         pageDiv.className = 'page';
         pageDiv.setAttribute('data-page', newId);
-        pageDiv.innerHTML = `<div class="sar-page">${getHomePage()}</div>`;
+        pageDiv.innerHTML = '<div class="sar-page">' + getHomePage() + '</div>';
         pagesContainer.appendChild(pageDiv);
-        
         switchTab(newId);
     }
 
     function closeTab(tabId) {
-        if (tabs.length === 1) {
-            createNewTab();
-            setTimeout(() => closeTab(tabId), 10);
-            return;
-        }
-        
+        if (tabs.length === 1) return;
         const index = tabs.findIndex(t => t.id === tabId);
         if (index === -1) return;
         tabs.splice(index, 1);
-        
         const tabDiv = document.querySelector(`.tab[data-tab="${tabId}"]`);
         if (tabDiv) tabDiv.remove();
         const pageDiv = document.querySelector(`.page[data-page="${tabId}"]`);
         if (pageDiv) pageDiv.remove();
-        
         if (activeTab === tabId) {
             const newActive = tabs[0]?.id;
             if (newActive) switchTab(newActive);
@@ -710,11 +482,8 @@
         document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
         document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
         document.querySelector(`.page[data-page="${tabId}"]`).classList.add('active');
-        
         const tab = tabs.find(t => t.id === tabId);
-        if (tab) {
-            document.getElementById('urlInput').value = tab.url;
-        }
+        if (tab) document.getElementById('urlInput').value = tab.url;
     }
 
     // ===== АВТОРИЗАЦИЯ =====
@@ -724,7 +493,6 @@
         const password = document.getElementById('authPassword').value;
         const email = login + tag;
         const isLogin = document.getElementById('authTitle').innerText === 'Вход в Centernet';
-        
         if (isLogin) {
             if (login(email, password)) {
                 document.getElementById('authScreen').style.display = 'none';
@@ -756,16 +524,12 @@
         }
     };
 
+    document.getElementById('newTabBtn').onclick = () => createNewTab();
     document.getElementById('goBtn').onclick = () => {
         const url = document.getElementById('urlInput').value;
-        navigateTo(url);
+        if (url.includes('.sar')) openSarSite(url.split('.')[0]);
+        else alert('Пока можно открывать только .sar сайты (sinopt, fbi, gensec, bmz)');
     };
-
-    document.getElementById('urlInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') document.getElementById('goBtn').click();
-    });
-
-    document.getElementById('newTabBtn').onclick = () => createNewTab();
 
     const saved = localStorage.getItem('centernet_current');
     if (saved && allUsers[saved]) {
