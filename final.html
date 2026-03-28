@@ -1,0 +1,349 @@
+<script>
+    // ===== ЗАКЛАДКИ =====
+    let bookmarks = JSON.parse(localStorage.getItem(`centernet_bookmarks_${currentUser}`)) || [];
+
+    function addBookmark(url, title) {
+        if (!currentUser) return;
+        if (!url) url = document.getElementById('urlInput').value;
+        if (!title) title = url.length > 30 ? url.substring(0, 30) + '...' : url;
+        
+        const exists = bookmarks.some(b => b.url === url);
+        if (!exists) {
+            bookmarks.unshift({ url, title, date: new Date().toLocaleString() });
+            bookmarks = bookmarks.slice(0, 20);
+            localStorage.setItem(`centernet_bookmarks_${currentUser}`, JSON.stringify(bookmarks));
+            updateBookmarksPanel();
+            showToast('🔖 Закладка добавлена');
+        } else {
+            showToast('❌ Уже в закладках');
+        }
+    }
+
+    function removeBookmark(url) {
+        bookmarks = bookmarks.filter(b => b.url !== url);
+        localStorage.setItem(`centernet_bookmarks_${currentUser}`, JSON.stringify(bookmarks));
+        updateBookmarksPanel();
+        showToast('🗑️ Закладка удалена');
+    }
+
+    function updateBookmarksPanel() {
+        const panel = document.getElementById('bookmarksPanel');
+        if (!panel) return;
+        
+        if (bookmarks.length === 0) {
+            panel.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">📭 Нет закладок</div>';
+            return;
+        }
+        
+        panel.innerHTML = bookmarks.map(b => `
+            <div class="bookmark-item" data-url="${b.url}">
+                <div class="bookmark-icon">🔖</div>
+                <div class="bookmark-info" onclick="navigateTo('${b.url}')">
+                    <div class="bookmark-title">${escapeHtml(b.title)}</div>
+                    <div class="bookmark-url">${escapeHtml(b.url)}</div>
+                </div>
+                <button class="bookmark-delete" onclick="removeBookmark('${b.url}')">✕</button>
+            </div>
+        `).join('');
+    }
+
+    function showToast(message) {
+        let toast = document.getElementById('centernetToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'centernetToast';
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 30px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--accent);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 40px;
+                font-size: 14px;
+                z-index: 10000;
+                opacity: 0;
+                transition: opacity 0.2s;
+                pointer-events: none;
+            `;
+            document.body.appendChild(toast);
+        }
+        toast.textContent = message;
+        toast.style.opacity = '1';
+        setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // ===== СОХРАНЕНИЕ ВКЛАДОК =====
+    function saveTabs() {
+        if (!currentUser) return;
+        const tabsToSave = tabs.map(tab => ({
+            id: tab.id,
+            url: tab.url,
+            title: tab.title,
+            type: tab.type || 'sar'
+        }));
+        localStorage.setItem(`centernet_tabs_${currentUser}`, JSON.stringify(tabsToSave));
+        localStorage.setItem(`centernet_activeTab_${currentUser}`, activeTab);
+    }
+
+    function loadTabs() {
+        if (!currentUser) return;
+        const savedTabs = localStorage.getItem(`centernet_tabs_${currentUser}`);
+        const savedActive = localStorage.getItem(`centernet_activeTab_${currentUser}`);
+        
+        if (savedTabs) {
+            const parsed = JSON.parse(savedTabs);
+            if (parsed.length > 0) {
+                // Очищаем существующие вкладки
+                while (tabs.length > 0) {
+                    closeTab(tabs[0].id);
+                }
+                
+                parsed.forEach(tab => {
+                    const newId = nextTabId++;
+                    tabs.push({
+                        id: newId,
+                        url: tab.url,
+                        title: tab.title,
+                        type: tab.type || 'sar'
+                    });
+                    
+                    const tabBar = document.getElementById('tabBar');
+                    const tabDiv = document.createElement('div');
+                    tabDiv.className = 'tab';
+                    tabDiv.setAttribute('data-tab', newId);
+                    tabDiv.innerHTML = `<span>${tab.url === 'centernet' ? '🏠' : '🌐'}</span><span>${tab.title}</span><button class="tab-close">✕</button>`;
+                    tabDiv.onclick = (e) => {
+                        if (e.target.classList.contains('tab-close')) {
+                            closeTab(newId);
+                            e.stopPropagation();
+                            return;
+                        }
+                        switchTab(newId);
+                    };
+                    tabBar.appendChild(tabDiv);
+                    
+                    const pagesContainer = document.getElementById('pagesContainer');
+                    const pageDiv = document.createElement('div');
+                    pageDiv.className = 'page';
+                    pageDiv.setAttribute('data-page', newId);
+                    if (tab.type === 'iframe') {
+                        pageDiv.innerHTML = `<iframe class="iframe-page" src="${tab.url}"></iframe>`;
+                    } else {
+                        pageDiv.innerHTML = `<div class="sar-page">${tab.url === 'centernet' ? getHomePage() : getSarPageContent(tab.url)}</div>`;
+                    }
+                    pagesContainer.appendChild(pageDiv);
+                });
+                
+                if (savedActive) {
+                    switchTab(parseInt(savedActive));
+                } else if (tabs.length > 0) {
+                    switchTab(tabs[0].id);
+                }
+            }
+        }
+    }
+
+    function getSarPageContent(site) {
+        if (site === 'sinopt') return getSinoptPage();
+        if (site === 'fbi') return getFBIPage();
+        if (site === 'gensec') return getGENSECPage();
+        if (site === 'bmz') return getBMZPage();
+        return getHomePage();
+    }
+
+    // ===== КНОПКА ЗАКЛАДКИ В ТУЛБАРЕ =====
+    function addBookmarkButton() {
+        const toolbar = document.querySelector('.toolbar');
+        const userMenu = document.querySelector('.user-menu');
+        
+        const bookmarkBtn = document.createElement('button');
+        bookmarkBtn.className = 'theme-toggle';
+        bookmarkBtn.id = 'bookmarkBtn';
+        bookmarkBtn.innerHTML = '🔖';
+        bookmarkBtn.title = 'Добавить в закладки';
+        bookmarkBtn.onclick = () => addBookmark();
+        bookmarkBtn.style.marginRight = '8px';
+        
+        toolbar.insertBefore(bookmarkBtn, userMenu);
+    }
+
+    // ===== ПАНЕЛЬ ЗАКЛАДОК =====
+    function createBookmarksPanel() {
+        const panel = document.createElement('div');
+        panel.id = 'bookmarksPanel';
+        panel.style.cssText = `
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: 320px;
+            max-height: 400px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            z-index: 2000;
+            overflow-y: auto;
+            display: none;
+        `;
+        
+        const header = document.createElement('div');
+        header.style.cssText = `
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        `;
+        header.innerHTML = `
+            <span>🔖 Закладки</span>
+            <button id="closeBookmarksPanel" style="background:none; border:none; cursor:pointer; font-size:20px;">✕</button>
+        `;
+        panel.appendChild(header);
+        
+        const list = document.createElement('div');
+        list.id = 'bookmarksList';
+        list.style.cssText = 'padding: 8px;';
+        panel.appendChild(list);
+        
+        document.body.appendChild(panel);
+        
+        document.getElementById('closeBookmarksPanel').onclick = () => {
+            panel.style.display = 'none';
+        };
+        
+        // Кнопка открытия панели
+        const bookmarksListBtn = document.createElement('button');
+        bookmarksListBtn.className = 'theme-toggle';
+        bookmarksListBtn.innerHTML = '📚';
+        bookmarksListBtn.title = 'Мои закладки';
+        bookmarksListBtn.onclick = () => {
+            updateBookmarksPanel();
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        };
+        
+        const toolbar = document.querySelector('.toolbar');
+        const themeToggle = document.getElementById('themeToggle');
+        toolbar.insertBefore(bookmarksListBtn, themeToggle);
+        
+        window.updateBookmarksPanel = function() {
+            const list = document.getElementById('bookmarksList');
+            if (!list) return;
+            
+            if (bookmarks.length === 0) {
+                list.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">📭 Нет закладок</div>';
+                return;
+            }
+            
+            list.innerHTML = bookmarks.map(b => `
+                <div style="padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="navigateTo('${b.url}')">
+                    <div style="flex:1; overflow:hidden;">
+                        <div style="font-weight:500; color: var(--text-primary);">${escapeHtml(b.title)}</div>
+                        <div style="font-size:11px; color: var(--text-secondary);">${escapeHtml(b.url)}</div>
+                    </div>
+                    <button onclick="event.stopPropagation(); removeBookmark('${b.url}')" style="background:none; border:none; cursor:pointer; color: var(--text-secondary);">✕</button>
+                </div>
+            `).join('');
+        };
+    }
+
+    // ===== СОХРАНЕНИЕ ПРИ ЗАКРЫТИИ =====
+    window.addEventListener('beforeunload', () => {
+        if (currentUser) {
+            saveTabs();
+        }
+    });
+
+    // ===== ОБНОВЛЁННАЯ ИНИЦИАЛИЗАЦИЯ =====
+    const originalInit = initApp;
+    window.initApp = function() {
+        if (originalInit) originalInit();
+        addBookmarkButton();
+        createBookmarksPanel();
+        loadTabs();
+        updateBookmarksPanel();
+    };
+    
+    // Переопределяем closeTab для сохранения
+    const originalCloseTab = closeTab;
+    window.closeTab = function(tabId) {
+        originalCloseTab(tabId);
+        saveTabs();
+    };
+    
+    // Переопределяем openSarSite для сохранения
+    const originalOpenSarSite = openSarSite;
+    window.openSarSite = function(site) {
+        originalOpenSarSite(site);
+        saveTabs();
+    };
+    
+    // Переопределяем navigateTo для сохранения
+    const originalNavigateTo = navigateTo;
+    window.navigateTo = function(query) {
+        originalNavigateTo(query);
+        saveTabs();
+    };
+    
+    // Добавляем стили для закладок
+    const style = document.createElement('style');
+    style.textContent = `
+        .bookmark-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.1s;
+        }
+        .bookmark-item:hover {
+            background: var(--accent-light);
+        }
+        .bookmark-icon {
+            font-size: 20px;
+            color: var(--accent);
+        }
+        .bookmark-info {
+            flex: 1;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .bookmark-title {
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .bookmark-url {
+            font-size: 11px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .bookmark-delete {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 16px;
+            padding: 4px 8px;
+        }
+        .bookmark-delete:hover {
+            color: var(--accent);
+        }
+    `;
+    document.head.appendChild(style);
+      </script>
